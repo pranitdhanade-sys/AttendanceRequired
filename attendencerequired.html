@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Attendance Helper — keep above 75%</title>
+  <style>
+    :root{--glass: rgba(255,255,255,0.08);--glass-2: rgba(255,255,255,0.06);--accent: #6C5CE7}
+    *{box-sizing:border-box;font-family:Inter,ui-sans-serif,system-ui,Segoe UI,Roboto,'Helvetica Neue',Arial}
+    html,body{height:100%;margin:0}
+    body{
+      display:grid;place-items:center;
+      background: linear-gradient(135deg,#0f172a 0%, #07122b 40%, #08142f 100%);
+      color:#e6eef8;padding:28px;
+    }
+    .wrap{width:100%;max-width:980px}
+    header{display:flex;gap:18px;align-items:center;margin-bottom:18px}
+    .logo{width:64px;height:64px;border-radius:12px;background:linear-gradient(135deg,var(--accent),#00bcd4);display:grid;place-items:center;font-weight:700;color:white}
+    h1{font-size:20px;margin:0}
+    p.lead{margin:0;color:#c9d8f4;opacity:0.9}
+
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+    .card{background:linear-gradient(180deg,var(--glass),var(--glass-2));backdrop-filter:blur(8px);padding:18px;border-radius:12px;box-shadow:0 6px 20px rgba(2,6,23,0.6)}
+    label{display:block;font-size:13px;margin-bottom:6px;color:#cfe3ff}
+    input[type=number],input[type=text]{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:inherit}
+    .row{display:flex;gap:10px}
+    .btn{padding:10px 12px;border-radius:10px;border:none;background:linear-gradient(90deg,var(--accent),#00bcd4);color:#021028;font-weight:600;cursor:pointer}
+    .small{font-size:13px;color:#bcd3ff}
+    .result{margin-top:12px;padding:12px;border-radius:8px;background:rgba(255,255,255,0.02);border:1px dashed rgba(255,255,255,0.03)}
+    .muted{color:#98b5e6;font-size:13px}
+    footer{margin-top:14px;color:#9fb4e0;font-size:13px}
+    .sim-row{display:flex;gap:8px;align-items:center}
+    .pill{display:inline-block;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,0.04);font-weight:600}
+    @media (max-width:720px){.grid{grid-template-columns:1fr}header{gap:12px}.logo{width:54px;height:54px}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="logo">A</div>
+      <div>
+        <h1>Attendance Helper</h1>
+        <p class="lead">Quickly find how many future lectures you must attend (or can skip) to stay above a target %.</p>
+      </div>
+    </header>
+
+    <div class="grid">
+      <div class="card">
+        <label>Total lectures held so far</label>
+        <input id="total" type="number" min="0" value="40" />
+
+        <label style="margin-top:10px">Lectures you attended so far</label>
+        <input id="attended" type="number" min="0" value="28" />
+
+        <label style="margin-top:10px">Target attendance (%)</label>
+        <input id="target" type="number" min="0" max="100" value="75" />
+
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <button class="btn" id="calcNeed">How many to attend now?</button>
+          <button class="btn" id="calcSkip">How many can I skip?</button>
+        </div>
+
+        <div class="result" id="resultMain">
+          <div class="muted">Results will appear here.</div>
+        </div>
+
+        <footer>
+          Tip: values update instantly — enter your current totals, then click any button.
+        </footer>
+      </div>
+
+      <div class="card">
+        <label>Simulate upcoming scheduled lectures</label>
+        <div class="sim-row" style="margin-top:8px">
+          <input id="upcoming" type="number" min="0" value="10" style="width:120px" />
+          <div class="muted">Total upcoming classes</div>
+        </div>
+
+        <div style="margin-top:12px">
+          <button class="btn" id="simulate">Simulate & find minimal attends</button>
+        </div>
+
+        <div class="result" id="simResult">
+          <div class="muted">Simulation results will appear here.</div>
+        </div>
+
+        <div style="margin-top:12px;display:flex;gap:8px">
+          <button class="btn" id="download">Download this page (HTML)</button>
+          <button class="btn" id="reset">Reset example values</button>
+        </div>
+
+        <div style="margin-top:12px" class="small">
+          What it does: calculates the minimum number <span class="pill">x</span> such that (attended + x) / (total + x) ≥ target — and also how many future lectures you may skip without dropping below target.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const $ = id => document.getElementById(id);
+
+    function safeNum(v){
+      v = Number(v);
+      if (!isFinite(v) || isNaN(v)) return 0;
+      return Math.max(0, Math.floor(v));
+    }
+
+    function formatInt(n){ return String(n); }
+
+    function calcNeeded(total, attended, targetPct){
+      // Solve (attended + x) / (total + x) >= targetPct
+      // x >= (targetPct*total - attended) / (1 - targetPct)
+      const p = targetPct/100;
+      if (p >= 1) return {possible:false, reason:'Target must be less than 100%'};
+      const numerator = p*total - attended;
+      if (numerator <= 0) return {needed:0, possible:true};
+      const denom = 1 - p;
+      const x = Math.ceil(numerator/denom - 1e-12);
+      return {needed: Math.max(0,x), possible:true};
+    }
+
+    function calcMaxSkip(total, attended, targetPct){
+      // Find largest s >=0 such that attended / (total + s) >= p
+      // attended >= p*(total + s) => s <= (attended/p) - total
+      const p = targetPct/100;
+      if (p <= 0) return {possible:false, reason:'Target must be > 0%'};
+      const maxS = Math.floor(attended / p - total + 1e-12);
+      return {maxSkip: Math.max(0, maxS), possible:true};
+    }
+
+    function updateResultMain(){
+      const total = safeNum($('total').value);
+      const attended = safeNum($('attended').value);
+      const target = Number($('target').value);
+      const el = $('resultMain');
+      if (attended > total) {
+        el.innerHTML = `<div class=muted>⚠️ You cannot have attended more classes than total held. Please correct values.</div>`;
+        return;
+      }
+      if (target <= 0 || target >= 100){
+        el.innerHTML = `<div class=muted>⚠️ Target should be between 1 and 99.</div>`;
+        return;
+      }
+
+      const curPct = total === 0 ? (attended === 0 ? 0 : 100) : (attended/total*100);
+      const need = calcNeeded(total, attended, target);
+      const skip = calcMaxSkip(total, attended, target);
+
+      let html = `<div style="font-weight:700">Current attendance: ${curPct.toFixed(2)}% (${attended}/${total})</div>`;
+      if (!need.possible) html += `<div class=muted>Cannot compute how many to attend: ${need.reason}</div>`;
+      else html += `<div style="margin-top:8px">→ You must attend <strong>${formatInt(need.needed)}</strong> consecutive future lecture(s) to reach at least ${target}%.</div>`;
+      if (!skip.possible) html += `<div class=muted>Cannot compute skips: ${skip.reason}</div>`;
+      else html += `<div style="margin-top:6px">→ You can skip up to <strong>${formatInt(skip.maxSkip)}</strong> future lecture(s) (if you skip more you'll fall below ${target}%).</div>`;
+
+      el.innerHTML = html;
+    }
+
+    function simulateUpcoming(){
+      const total = safeNum($('total').value);
+      const attended = safeNum($('attended').value);
+      const target = Number($('target').value);
+      const upcoming = safeNum($('upcoming').value);
+      const el = $('simResult');
+      if (attended > total) { el.innerHTML = `<div class=muted>⚠️ Fix values — attended can't exceed total.</div>`; return; }
+      if (target <= 0 || target >= 100) { el.innerHTML = `<div class=muted>⚠️ Target should be between 1 and 99.</div>`; return; }
+
+      // For N upcoming classes, find minimal k (attend) so that (attended + k)/(total + upcoming) >= p
+      const p = target/100;
+      const neededNumer = Math.ceil(p*(total + upcoming) - attended - 1e-12);
+      const minK = Math.max(0, neededNumer);
+      let html = `<div style="font-weight:700">Simulation for ${upcoming} upcoming class(es):</div>`;
+      if (minK > upcoming) html += `<div class=muted style="margin-top:8px">Even if you attend all ${upcoming} upcoming classes, you <strong>still won't</strong> reach ${target}%.</div>`;
+      else html += `<div style="margin-top:8px">→ You must attend at least <strong>${minK}</strong> of the next ${upcoming} lectures to have ≥ ${target}% overall.</div>`;
+
+      // Also show final percentage if attend all vs none
+      const pctAll = ((attended + upcoming)/(total + upcoming))*100;
+      const pctNone = (total + upcoming === 0) ? 0 : (attended/(total + upcoming))*100;
+      html += `<div style="margin-top:8px" class=muted>Final % if you attend all: ${pctAll.toFixed(2)}% · if you attend none: ${pctNone.toFixed(2)}%</div>`;
+
+      el.innerHTML = html;
+    }
+
+    // events
+    $('calcNeed').addEventListener('click', updateResultMain);
+    $('calcSkip').addEventListener('click', updateResultMain);
+    $('simulate').addEventListener('click', simulateUpcoming);
+    $('reset').addEventListener('click', ()=>{
+      $('total').value = 40; $('attended').value = 28; $('target').value = 75; $('upcoming').value = 10;
+      $('resultMain').innerHTML = `<div class=muted>Results will appear here.</div>`;
+      $('simResult').innerHTML = `<div class=muted>Simulation results will appear here.</div>`;
+    });
+
+    // download self as HTML
+    $('download').addEventListener('click', ()=>{
+      const content = '<!doctype html>' + document.documentElement.outerHTML;
+      const blob = new Blob([content], {type: 'text/html'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'attendance-helper.html'; document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+    });
+
+    // live update when user changes numbers (small convenience)
+    ['total','attended','target'].forEach(id=>{
+      $(id).addEventListener('input', ()=>{
+        // keep attended <= total automatically
+        const t = safeNum($('total').value);
+        const a = safeNum($('attended').value);
+        if (a > t) {
+          // don't auto-fix; just show warning in result area
+        }
+      });
+    });
+  </script>
+</body>
+</html>
