@@ -72,6 +72,7 @@ pip install -r requirements.txt
 # Run the application
 ```
 uvicorn app.main:app --reload
+```
 
 
 # UI Preview  
@@ -80,7 +81,6 @@ uvicorn app.main:app --reload
 ```
 
 # Contributing
-```
 ```
 1. Fork the repo
 2. Create a branch: git checkout -b feature/YourFeature
