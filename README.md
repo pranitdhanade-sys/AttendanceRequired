@@ -77,7 +77,7 @@ uvicorn app.main:app --reload
 
 # UI Preview  
 ```
-![UI Preview](https://github.com/pranitdhanade-sys/AttendanceRequired.git)
+![UI Preview](https://github.com/pranitdhanade-sys/AttendanceRequired/blob/main/UI-Preview.png)
 ```
 
 # Contributing
