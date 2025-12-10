@@ -48,25 +48,31 @@ attendance_helper/
 │
 ├─ requirements.txt
 └─ README.md
-
+```
 
 # Installation
-```
+
 # Clone the repo
+```
 git clone https://github.com/yourusername/attendance-helper.git
 cd attendance-helper
+```
 
 # Create virtual environment
+```
 python3 -m venv venv
 source venv/bin/activate   # Linux/Mac
 venv\Scripts\activate      # Windows
+```
 
 # Install dependencies
-pip install -r requirements.txt
-
-# Run the application
-uvicorn app.main:app --reload
 ```
+pip install -r requirements.txt
+```
+# Run the application
+```
+uvicorn app.main:app --reload
+
 
 # UI Preview  
 ```
@@ -74,6 +80,7 @@ uvicorn app.main:app --reload
 ```
 
 # Contributing
+```
 ```
 1. Fork the repo
 2. Create a branch: git checkout -b feature/YourFeature
