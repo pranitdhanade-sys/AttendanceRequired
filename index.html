@@ -1,0 +1,752 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#f4f0e8">
+<title>ATTEND//OR//BUNK — Attendance OS</title>
+<style>
+:root {
+  --bg:#f4f0e8;
+  --ink:#171717;
+  --muted:#66645d;
+  --paper:#fffdf6;
+  --lime:#d7ff38;
+  --pink:#ff6bce;
+  --red:#ff5147;
+  --blue:#91c8ff;
+  --border:3px solid var(--ink);
+  --shadow:5px 5px 0 var(--ink);
+}
+*{box-sizing:border-box}
+body{
+  margin:0;background:var(--bg);color:var(--ink);
+  font-family:Arial,Helvetica,sans-serif;
+  background-image:radial-gradient(#17171720 .8px,transparent .8px);
+  background-size:12px 12px;
+}
+button,input,select{font:inherit}
+button{cursor:pointer;color:var(--ink)}
+button:focus-visible,input:focus-visible{outline:3px solid #296bff;outline-offset:3px}
+.wrap{max-width:1200px;margin:auto;padding:22px}
+.topbar{
+  display:flex;justify-content:space-between;align-items:center;
+  gap:12px;flex-wrap:wrap;border-bottom:var(--border);padding-bottom:16px
+}
+.brand{font-weight:1000;font-size:20px;letter-spacing:-1px}
+.brand span{background:var(--lime);padding:5px}
+.tag{font-size:11px;font-weight:900;border:2px solid;padding:7px 10px;background:var(--paper)}
+.hero{padding:40px 0 26px}
+.eyebrow{font-weight:900;font-size:12px;letter-spacing:2px}
+h1{font-size:clamp(43px,9vw,100px);line-height:.86;letter-spacing:-6px;margin:16px 0}
+h1 span{color:var(--red)}
+.subtitle{font-size:15px;line-height:1.6;max-width:620px;color:#42413c}
+.grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:16px}
+.card{border:var(--border);background:var(--paper);box-shadow:var(--shadow);padding:20px;min-width:0}
+.span-8{grid-column:span 8}
+.span-4{grid-column:span 4}
+.span-6{grid-column:span 6}
+.span-12{grid-column:span 12}
+.cardhead{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:20px}
+h2{font-size:19px;letter-spacing:-.7px;margin:0;font-weight:1000}
+h3{font-size:14px;margin:0 0 10px}
+.stamp{font-size:10px;font-weight:1000;border:2px solid;padding:5px 7px;white-space:nowrap}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.field label{display:block;font-size:11px;font-weight:900;text-transform:uppercase;margin-bottom:8px;letter-spacing:.5px}
+.field input,.field select{
+  width:100%;min-width:0;border:2px solid var(--ink);
+  padding:13px;background:white;border-radius:0;font-weight:800
+}
+.presets{display:flex;gap:7px;flex-wrap:wrap;margin:14px 0}
+.btn{border:2px solid var(--ink);padding:11px 14px;font-weight:900;background:white;box-shadow:3px 3px 0 var(--ink);transition:.1s}
+.btn:hover{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink)}
+.btn.dark{background:var(--ink);color:white}
+.btn.lime{background:var(--lime)}
+.btn.pink{background:var(--pink)}
+.btn.red{background:var(--red)}
+.btn.small{padding:7px 9px;font-size:12px}
+.metrics{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.metric{border:2px solid var(--ink);padding:14px;min-width:0}
+.metric .label{font-size:10px;font-weight:1000;letter-spacing:.7px}
+.metric .value{font-size:clamp(27px,4vw,43px);font-weight:1000;letter-spacing:-2px;margin:7px 0;overflow-wrap:anywhere}
+.metric .hint{font-size:11px;line-height:1.4;color:#494840}
+.metric.main{background:var(--lime)}
+.metric.alert{background:var(--pink)}
+.progress{height:24px;border:2px solid var(--ink);background:#e4e0d6;margin:14px 0;position:relative}
+.bar{height:100%;width:0;background:var(--lime);transition:width .2s}
+.targetline{position:absolute;top:-5px;bottom:-5px;border-left:3px dashed var(--red);z-index:1}
+.progresslabels{display:flex;justify-content:space-between;font-size:10px;font-weight:900;gap:8px}
+.status{padding:12px;border:2px solid var(--ink);font-size:13px;line-height:1.6;font-weight:800;margin-top:14px;background:var(--blue)}
+.status.good{background:var(--lime)}
+.status.bad{background:var(--pink)}
+.status.warn{background:#ffd56b}
+hr{border:0;border-top:2px dashed #777;margin:20px 0}
+.smalltext{font-size:12px;color:var(--muted);line-height:1.6}
+.simresult{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:15px}
+.simbox{padding:12px;border:2px solid var(--ink);background:white}
+.simbox strong{display:block;font-size:26px;margin-top:6px}
+.section-title{font-size:clamp(24px,4vw,36px);font-weight:1000;letter-spacing:-1.5px;margin:40px 0 18px}
+.subject-form{display:grid;grid-template-columns:2fr 1fr 1fr auto;gap:8px}
+.subject-form input{width:100%;min-width:0;padding:11px;border:2px solid var(--ink);background:white}
+.subject-list{display:grid;gap:12px;margin-top:18px}
+.subject{border:2px solid var(--ink);padding:14px;background:white}
+.subjecttop{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.subjectname{font-size:17px;font-weight:1000;overflow-wrap:anywhere}
+.subjectpercent{font-size:25px;font-weight:1000}
+.subjectbar{height:12px;border:2px solid;margin:10px 0;background:#eee}
+.subjectbar div{height:100%;background:var(--lime)}
+.subjectactions{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px}
+.empty{padding:25px;text-align:center;border:2px dashed #888;color:var(--muted);font-size:13px}
+.log{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+.log button{padding:14px 8px}
+footer{border-top:var(--border);margin-top:42px;padding:22px 0;display:flex;justify-content:space-between;gap:15px;flex-wrap:wrap;font-size:11px;font-weight:900}
+.hidden{display:none!important}
+@media(max-width:760px){
+ .wrap{padding:15px}
+ .span-8,.span-4,.span-6{grid-column:span 12}
+ h1{letter-spacing:-3px}
+ .subject-form{grid-template-columns:1fr 1fr}
+ .subject-form input:first-child{grid-column:span 2}
+ .subject-form button{grid-column:span 2}
+ .card{padding:15px}
+}
+@media(max-width:380px){
+ .fields,.metrics{grid-template-columns:1fr}
+ .metric .value{font-size:36px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="topbar">
+    <div class="brand">ATTEND<span>//</span>OS</div>
+    <div class="tag">STUDENT SURVIVAL SYSTEM v1.0</div>
+    <div class="tag" id="clock">YOUR SEMESTER. YOUR RULES.</div>
+  </header>
+
+  <section class="hero">
+    <div class="eyebrow">ACADEMIC RISK MANAGEMENT / 001</div>
+    <h1>ATTEND OR<br><span>BUNK?</span></h1>
+    <p class="subtitle">Your attendance is a number. Your freedom is a calculation. Know your limit, plan your recovery, and stop guessing before you skip another lecture.</p>
+  </section>
+
+  <main>
+    <div class="grid">
+      <section class="card span-8">
+        <div class="cardhead">
+          <h2>01 / INPUT YOUR STATS</h2>
+          <span class="stamp">LIVE CALCULATION</span>
+        </div>
+        <div class="fields">
+          <div class="field">
+            <label for="attended">Lectures attended</label>
+            <input id="attended" type="number" min="0" step="1" value="42">
+          </div>
+          <div class="field">
+            <label for="total">Total lectures conducted</label>
+            <input id="total" type="number" min="0" step="1" value="50">
+          </div>
+          <div class="field">
+            <label for="target">Required attendance (%)</label>
+            <input id="target" type="number" min="1" max="100" step="1" value="75">
+          </div>
+          <div class="field">
+            <label for="remaining">Lectures remaining this term</label>
+            <input id="remaining" type="number" min="0" step="1" value="30">
+          </div>
+        </div>
+        <div class="presets">
+          <button class="btn small" data-target="65">65%</button>
+          <button class="btn small" data-target="75">75%</button>
+          <button class="btn small" data-target="80">80%</button>
+          <button class="btn small" data-target="85">85%</button>
+          <button class="btn small" data-target="90">90%</button>
+        </div>
+        <div class="log">
+          <button class="btn lime" id="presentBtn">+ PRESENT</button>
+          <button class="btn pink" id="absentBtn">+ ABSENT</button>
+          <button class="btn" id="undoBtn">UNDO LAST</button>
+        </div>
+        <hr>
+        <div class="smalltext">Quick actions update your lecture counts immediately. Use undo to reverse your last quick action.</div>
+      </section>
+
+      <section class="card span-4">
+        <div class="cardhead">
+          <h2>02 / YOUR STATUS</h2>
+          <span class="stamp" id="statusStamp">ANALYZING</span>
+        </div>
+        <div class="metric main">
+          <div class="label">CURRENT ATTENDANCE</div>
+          <div class="value" id="percentage">84.00%</div>
+          <div class="hint" id="ratio">42 PRESENT / 50 HELD</div>
+        </div>
+        <div class="progress" role="progressbar" aria-label="Attendance progress" aria-valuemin="0" aria-valuemax="100" id="progress">
+          <div class="bar" id="bar"></div>
+          <div class="targetline" id="targetline"></div>
+        </div>
+        <div class="progresslabels">
+          <span>0% ATTENDED</span>
+          <span id="targetLabel">TARGET 75%</span>
+          <span>100%</span>
+        </div>
+        <div class="status good" id="statusMessage" aria-live="polite">You're on track.</div>
+      </section>
+
+      <section class="card span-6">
+        <div class="cardhead">
+          <h2>03 / BUNK INTELLIGENCE</h2>
+          <span class="stamp">THE NUMBERS</span>
+        </div>
+        <div class="metrics">
+          <div class="metric main">
+            <div class="label">SAFE LECTURES TO SKIP</div>
+            <div class="value" id="skipCount">6</div>
+            <div class="hint" id="skipHint">While staying at or above target.</div>
+          </div>
+          <div class="metric alert">
+            <div class="label">LECTURES TO RECOVER</div>
+            <div class="value" id="recoverCount">0</div>
+            <div class="hint">Consecutive lectures to attend to reach target.</div>
+          </div>
+          <div class="metric">
+            <div class="label">MINIMUM PRESENT COUNT</div>
+            <div class="value" id="minCount">38</div>
+            <div class="hint">Required for classes conducted so far.</div>
+          </div>
+          <div class="metric">
+            <div class="label">CURRENT ABSENCES</div>
+            <div class="value" id="absences">8</div>
+            <div class="hint">Lectures missed so far.</div>
+          </div>
+        </div>
+        <div class="status" id="bunkMessage">Check your safe skip limit.</div>
+      </section>
+
+      <section class="card span-6">
+        <div class="cardhead">
+          <h2>04 / FUTURE SIMULATOR</h2>
+          <span class="stamp">WHAT IF?</span>
+        </div>
+        <div class="field">
+          <label for="simulate">Upcoming lectures to simulate</label>
+          <input id="simulate" type="number" min="0" step="1" value="5">
+        </div>
+        <div class="simresult">
+          <div class="simbox">
+            <div class="label">ATTEND ALL</div>
+            <strong id="allFuture">85.45%</strong>
+            <div class="smalltext">If you attend every lecture.</div>
+          </div>
+          <div class="simbox">
+            <div class="label">MISS ALL</div>
+            <strong id="missFuture">76.36%</strong>
+            <div class="smalltext">If you skip every lecture.</div>
+          </div>
+          <div class="simbox">
+            <div class="label">MINIMUM TO ATTEND</div>
+            <strong id="neededFuture">0</strong>
+            <div class="smalltext">Out of the remaining term lectures.</div>
+          </div>
+          <div class="simbox">
+            <div class="label">FINAL IF ON TARGET</div>
+            <strong id="finalForecast">--</strong>
+            <div class="smalltext">If you attend the minimum needed.</div>
+          </div>
+        </div>
+        <div class="status warn" id="futureMessage">Plan ahead, not at the last minute.</div>
+      </section>
+    </div>
+
+    <h2 class="section-title">05 / SUBJECT CONTROL CENTER_</h2>
+    <section class="card">
+      <div class="cardhead">
+        <h2>SUBJECT-WISE TRACKER</h2>
+        <span class="stamp">SAVED ON THIS DEVICE</span>
+      </div>
+      <form id="subjectForm" class="subject-form">
+        <input id="subjectName" maxlength="70" placeholder="Subject name (e.g. Mathematics)" required>
+        <input id="subjectAttended" type="number" min="0" step="1" placeholder="Attended" required>
+        <input id="subjectTotal" type="number" min="0" step="1" placeholder="Total held" required>
+        <button class="btn lime" type="submit">+ ADD SUBJECT</button>
+      </form>
+      <div class="presets">
+        <button class="btn small" id="syncSubjects">USE SUBJECT TOTALS</button>
+        <button class="btn small" id="exportCsv">EXPORT CSV</button>
+        <button class="btn small" id="exportJson">BACKUP JSON</button>
+        <button class="btn small" id="importButton">IMPORT BACKUP</button>
+        <input type="file" id="importFile" accept=".json,application/json" class="hidden">
+      </div>
+      <p class="smalltext">Each subject is calculated independently. Log present or absent lectures, edit records, or use your subject totals in the main calculator.</p>
+      <div id="subjectList" class="subject-list">
+        <div class="empty">NO SUBJECTS YET. ADD YOUR FIRST SUBJECT ABOVE.</div>
+      </div>
+    </section>
+
+    <section class="card" style="margin-top:18px;background:var(--lime)">
+      <div class="cardhead">
+        <h2>06 / THE MATH BEHIND THE BUNK</h2>
+        <span class="stamp">NO GUESSWORK</span>
+      </div>
+      <p class="smalltext" style="color:var(--ink)">
+        <strong>Attendance %</strong> = Attended ÷ Total × 100<br>
+        <strong>Safe skips</strong> = floor(Attended ÷ Target − Total)<br>
+        <strong>Recovery lectures</strong> = ceil((Target × Total − Attended) ÷ (1 − Target))<br>
+        <strong>Minimum present count</strong> = ceil(Target × Total)<br>
+        <strong>Minimum future attendance</strong> = ceil(Target × Final Total − Current Attended)
+      </p>
+      <p class="smalltext" style="color:var(--ink)">Calculations assume each lecture counts equally. Your institution's official attendance rules always take priority.</p>
+    </section>
+
+    <div class="presets" style="margin-top:25px">
+      <button class="btn dark" id="saveBtn">SAVE CURRENT NUMBERS</button>
+      <button class="btn" id="resetBtn">RESET ALL DATA</button>
+    </div>
+    <p id="saveMessage" class="smalltext" aria-live="polite"></p>
+  </main>
+
+  <footer>
+    <span>ATTEND//OS — BUILT FOR THE ACADEMICALLY SUSPICIOUS.</span>
+    <span>LOCAL FIRST / NO ACCOUNT REQUIRED</span>
+  </footer>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+const STORAGE_KEY = "attendOS_v1";
+let subjects = [];
+let undoState = null;
+
+function number(id) {
+  return Number($(id).value);
+}
+
+function validWhole(n) {
+  return Number.isFinite(n) && n >= 0 && Number.isInteger(n);
+}
+
+function pct(a, t) {
+  return t > 0 ? a / t * 100 : 0;
+}
+
+function fmt(n) {
+  return Number.isFinite(n) ? n.toFixed(2) + "%" : "--";
+}
+
+function safeSkip(a, t, target) {
+  if (target <= 0 || t === 0 || a / t < target) return 0;
+  return Math.max(0, Math.floor((a - target * t) / target + 1e-10));
+}
+
+function recovery(a, t, target) {
+  if (t === 0 || a / t >= target) return 0;
+  if (target >= 1) return a === t ? 0 : Infinity;
+  return Math.max(0, Math.ceil((target * t - a) / (1 - target) - 1e-10));
+}
+
+function getMain() {
+  const a = number("attended");
+  const t = number("total");
+  const target = number("target") / 100;
+  const rem = number("remaining");
+  const sim = number("simulate");
+
+  if (![a,t,rem,sim].every(validWhole) ||
+      !Number.isFinite(target) || target <= 0 || target > 1 ||
+      a > t) {
+    return {error:"Enter valid whole-number counts. Attended cannot exceed total, and target must be between 1% and 100%."};
+  }
+
+  return {a,t,target,rem,sim};
+}
+
+function update() {
+  const d = getMain();
+  if (d.error) {
+    $("statusMessage").textContent = d.error;
+    $("statusMessage").className = "status bad";
+    $("statusStamp").textContent = "CHECK INPUT";
+    return;
+  }
+
+  const {a,t,target,rem,sim} = d;
+  const current = pct(a,t);
+  const onTarget = t > 0 && a / t >= target;
+  const skip = safeSkip(a,t,target);
+  const recover = recovery(a,t,target);
+  const minimum = Math.ceil(target * t - 1e-10);
+  const abs = t - a;
+
+  $("percentage").textContent = fmt(current);
+  $("ratio").textContent = `${a} PRESENT / ${t} HELD`;
+  $("bar").style.width = Math.min(100,current) + "%";
+  $("targetline").style.left = target * 100 + "%";
+  $("targetLabel").textContent = `TARGET ${target * 100}%`;
+  $("progress").setAttribute("aria-valuenow", Math.min(100,current));
+  $("statusStamp").textContent = onTarget ? "ON TARGET" : "SHORTAGE";
+
+  $("statusMessage").textContent = t === 0
+    ? "Add some conducted lectures to calculate your attendance."
+    : onTarget
+      ? `You're meeting your ${target*100}% target. Keep a buffer for unexpected absences.`
+      : `You're below your ${target*100}% target. Attend ${recover === Infinity ? "all future lectures" : recover} consecutive lectures to recover.`;
+  $("statusMessage").className = "status " + (t === 0 ? "warn" : onTarget ? "good" : "bad");
+
+  $("skipCount").textContent = t === 0 ? "—" : onTarget ? skip : "0";
+  $("skipHint").textContent = onTarget
+    ? `Missing ${skip} more keeps you at or above ${target*100}%.`
+    : "Recover your attendance before considering absences.";
+  $("recoverCount").textContent = recover === Infinity ? "ALL" : recover;
+  $("minCount").textContent = minimum;
+  $("absences").textContent = abs;
+
+  $("bunkMessage").textContent = t === 0
+    ? "Enter your lecture counts to calculate your skip limit."
+    : onTarget
+      ? skip > 0
+        ? `You can miss ${skip} lecture(s). One more than that would put you below your target.`
+        : "You're exactly at the limit. Missing one lecture may put you below your target."
+      : `Attendance is short. Attend ${recover === Infinity ? "every remaining lecture" : recover + " consecutive lectures"} to reach the target.`;
+  $("bunkMessage").className = "status " + (onTarget ? "good" : "bad");
+
+  const allFuture = pct(a + sim,t + sim);
+  const missFuture = pct(a,t + sim);
+  $("allFuture").textContent = fmt(allFuture);
+  $("missFuture").textContent = fmt(missFuture);
+
+  const needed = Math.max(0,Math.ceil(target*(t+rem)-a-1e-10));
+  const possible = needed <= rem;
+  $("neededFuture").textContent = rem === 0 ? "0" : needed;
+  $("finalForecast").textContent = rem === 0
+    ? fmt(current)
+    : possible ? fmt(pct(a+needed,t+rem)) : "UNREACHABLE";
+
+  $("futureMessage").textContent = rem === 0
+    ? "No future lectures entered. Update the remaining count to plan your semester."
+    : possible
+      ? `Attend at least ${needed} of the ${rem} remaining lectures to finish at or above ${target*100}%.`
+      : `Your target is not reachable with only ${rem} lectures remaining. You would need ${needed} attendance(s).`;
+  $("futureMessage").className = "status " + (rem === 0 ? "warn" : possible ? "good" : "bad");
+}
+
+function saveData() {
+  const data = {
+    main: {
+      attended:$("attended").value,
+      total:$("total").value,
+      target:$("target").value,
+      remaining:$("remaining").value,
+      simulate:$("simulate").value
+    },
+    subjects
+  };
+  try {
+    localStorage.setItem(STORAGE_KEY,JSON.stringify(data));
+    $("saveMessage").textContent = "SAVED ON THIS DEVICE.";
+    return true;
+  } catch {
+    $("saveMessage").textContent = "Could not save. Export a backup instead.";
+    return false;
+  }
+}
+
+function loadData() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const data = JSON.parse(raw);
+    if (data.main) {
+      for (const id of ["attended","total","target","remaining","simulate"]) {
+        if (data.main[id] !== undefined) $(id).value = data.main[id];
+      }
+    }
+    if (Array.isArray(data.subjects)) {
+      subjects = data.subjects.filter(s =>
+        s && typeof s.name === "string" &&
+        validWhole(s.attended) && validWhole(s.total) &&
+        s.attended <= s.total
+      );
+    }
+  } catch {
+    $("saveMessage").textContent = "Saved data could not be loaded.";
+  }
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g,c => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  })[c]);
+}
+
+function renderSubjects() {
+  const list = $("subjectList");
+  if (!subjects.length) {
+    list.innerHTML = '<div class="empty">NO SUBJECTS YET. ADD YOUR FIRST SUBJECT ABOVE.</div>';
+    return;
+  }
+
+  list.innerHTML = subjects.map((s,i) => {
+    const p = pct(s.attended,s.total);
+    const goal = number("target");
+    const meets = s.total > 0 && p >= goal;
+    const skips = safeSkip(s.attended,s.total,goal/100);
+    const need = recovery(s.attended,s.total,goal/100);
+    return `
+      <article class="subject">
+        <div class="subjecttop">
+          <div>
+            <div class="subjectname">${escapeHtml(s.name)}</div>
+            <div class="smalltext">${s.attended} attended / ${s.total} conducted</div>
+          </div>
+          <div class="subjectpercent">${fmt(p)}</div>
+        </div>
+        <div class="subjectbar"><div style="width:${Math.min(100,p)}%"></div></div>
+        <div class="smalltext">${meets
+          ? `SAFE: ${skips} more possible skip(s) at the current target.`
+          : `RECOVERY: ${need === Infinity ? "attend all lectures" : need + " consecutive lecture(s)"}.`
+        }</div>
+        <div class="subjectactions">
+          <button class="btn small lime" data-action="present" data-i="${i}">+ PRESENT</button>
+          <button class="btn small pink" data-action="absent" data-i="${i}">+ ABSENT</button>
+          <button class="btn small" data-action="edit" data-i="${i}">EDIT</button>
+          <button class="btn small" data-action="delete" data-i="${i}">DELETE</button>
+        </div>
+      </article>`;
+  }).join("");
+}
+
+function snapshot() {
+  undoState = {
+    attended:$("attended").value,
+    total:$("total").value
+  };
+}
+
+function changeMain(type) {
+  const d = getMain();
+  if (d.error) {
+    update();
+    return;
+  }
+  snapshot();
+  if (type === "present") {
+    $("attended").value = d.a + 1;
+    $("total").value = d.t + 1;
+  } else {
+    $("total").value = d.t + 1;
+  }
+  update();
+  saveData();
+}
+
+["attended","total","target","remaining","simulate"].forEach(id => {
+  $(id).addEventListener("input",() => {
+    update();
+    renderSubjects();
+    saveData();
+  });
+});
+
+document.querySelectorAll("[data-target]").forEach(btn => {
+  btn.addEventListener("click",() => {
+    $("target").value = btn.dataset.target;
+    update();
+    renderSubjects();
+    saveData();
+  });
+});
+
+$("presentBtn").addEventListener("click",() => changeMain("present"));
+$("absentBtn").addEventListener("click",() => changeMain("absent"));
+
+$("undoBtn").addEventListener("click",() => {
+  if (!undoState) {
+    $("saveMessage").textContent = "Nothing to undo.";
+    return;
+  }
+  $("attended").value = undoState.attended;
+  $("total").value = undoState.total;
+  undoState = null;
+  update();
+  saveData();
+});
+
+$("subjectForm").addEventListener("submit",e => {
+  e.preventDefault();
+  const name = $("subjectName").value.trim();
+  const attended = Number($("subjectAttended").value);
+  const total = Number($("subjectTotal").value);
+  if (!name || !validWhole(attended) || !validWhole(total) || attended > total) {
+    alert("Enter a subject name and valid whole-number counts. Attended cannot exceed total.");
+    return;
+  }
+  subjects.push({name,attended,total});
+  $("subjectForm").reset();
+  renderSubjects();
+  saveData();
+});
+
+$("subjectList").addEventListener("click",e => {
+  const btn = e.target.closest("button[data-action]");
+  if (!btn) return;
+  const i = Number(btn.dataset.i);
+  const s = subjects[i];
+  if (!s) return;
+
+  switch(btn.dataset.action) {
+    case "present":
+      s.attended++;
+      s.total++;
+      break;
+    case "absent":
+      s.total++;
+      break;
+    case "delete":
+      if (!confirm(`Delete ${s.name}?`)) return;
+      subjects.splice(i,1);
+      break;
+    case "edit": {
+      const name = prompt("Subject name:",s.name);
+      if (name === null) return;
+      const attended = prompt("Lectures attended:",s.attended);
+      if (attended === null) return;
+      const total = prompt("Total lectures conducted:",s.total);
+      if (total === null) return;
+      const a = Number(attended), t = Number(total);
+      if (!name.trim() || !validWhole(a) || !validWhole(t) || a > t) {
+        alert("Invalid subject data.");
+        return;
+      }
+      Object.assign(s,{name:name.trim(),attended:a,total:t});
+      break;
+    }
+  }
+  renderSubjects();
+  saveData();
+});
+
+$("syncSubjects").addEventListener("click",() => {
+  if (!subjects.length) {
+    alert("Add subjects first.");
+    return;
+  }
+  const total = subjects.reduce((sum,s) => sum+s.total,0);
+  const attended = subjects.reduce((sum,s) => sum+s.attended,0);
+  $("total").value = total;
+  $("attended").value = attended;
+  update();
+  saveData();
+  $("saveMessage").textContent = "Main totals synced from all subjects.";
+});
+
+function download(filename,content,type) {
+  const blob = new Blob([content],{type});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(url),1000);
+}
+
+$("exportCsv").addEventListener("click",() => {
+  const rows = [["Subject","Attended","Total","Attendance %","Target %"]];
+  subjects.forEach(s => rows.push([
+    s.name,s.attended,s.total,pct(s.attended,s.total).toFixed(2),number("target")
+  ]));
+  const csv = rows.map(row => row.map(v =>
+    '"' + String(v).replace(/"/g,'""') + '"'
+  ).join(",")).join("\r\n");
+  download("attendance-report.csv","\uFEFF"+csv,"text/csv;charset=utf-8");
+});
+
+$("exportJson").addEventListener("click",() => {
+  const data = {
+    main:{
+      attended:$("attended").value,
+      total:$("total").value,
+      target:$("target").value,
+      remaining:$("remaining").value,
+      simulate:$("simulate").value
+    },
+    subjects
+  };
+  download("attendance-backup.json",JSON.stringify(data,null,2),"application/json");
+});
+
+$("importButton").addEventListener("click",() => $("importFile").click());
+
+$("importFile").addEventListener("change",async e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  try {
+    const data = JSON.parse(await file.text());
+    if (!data || !Array.isArray(data.subjects) || !data.main) {
+      throw new Error("Invalid backup structure");
+    }
+    const validSubjects = data.subjects.every(s =>
+      s && typeof s.name === "string" &&
+      validWhole(s.attended) && validWhole(s.total) &&
+      s.attended <= s.total
+    );
+    if (!validSubjects) throw new Error("Invalid subject data");
+
+    const m = data.main;
+    const a = Number(m.attended), t = Number(m.total);
+    const target = Number(m.target);
+    const rem = Number(m.remaining), sim = Number(m.simulate);
+    if (!validWhole(a) || !validWhole(t) || a > t ||
+        !Number.isFinite(target) || target < 1 || target > 100 ||
+        !validWhole(rem) || !validWhole(sim)) {
+      throw new Error("Invalid main attendance data");
+    }
+    if (!confirm("Replace your current attendance data with this backup?")) return;
+
+    $("attended").value = a;
+    $("total").value = t;
+    $("target").value = target;
+    $("remaining").value = rem;
+    $("simulate").value = sim;
+    subjects = data.subjects;
+    update();
+    renderSubjects();
+    saveData();
+    $("saveMessage").textContent = "Backup imported successfully.";
+  } catch {
+    alert("Could not import this file. Choose a valid attendance backup.");
+  } finally {
+    e.target.value = "";
+  }
+});
+
+$("saveBtn").addEventListener("click",saveData);
+
+$("resetBtn").addEventListener("click",() => {
+  if (!confirm("Delete all attendance numbers and subjects? Export a backup first if needed.")) return;
+  localStorage.removeItem(STORAGE_KEY);
+  subjects = [];
+  undoState = null;
+  $("attended").value = 0;
+  $("total").value = 0;
+  $("target").value = 75;
+  $("remaining").value = 0;
+  $("simulate").value = 0;
+  update();
+  renderSubjects();
+  $("saveMessage").textContent = "All data reset.";
+});
+
+function tick() {
+  $("clock").textContent = new Date().toLocaleString(undefined,{
+    weekday:"short",hour:"2-digit",minute:"2-digit"
+  }).toUpperCase();
+}
+
+loadData();
+update();
+renderSubjects();
+tick();
+</script>
+</body>
+</html>
